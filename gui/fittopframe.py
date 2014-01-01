@@ -1,20 +1,31 @@
 import wx
+from fitplotter import FitPlotter
+from topparser import TopDirParser
+import pandas as pd
+import numpy as np
 
 class FitTopFrame(wx.Frame):
-    def __init__(self, parent, id, title):
+    def __init__(self, parent, id, parsedir, title):
         wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, (750, 450))
 
         self.SetMinSize((750, 450))
-
+        
+        self.parsedir = parsedir
+        self.plotter= dict()
+        self.top_user_df = pd.DataFrame()
+        self.top_process_df = pd.DataFrame()
+        
+        self.loadTopData()
+        
         #menubar = wx.MenuBar()
         #file = wx.Menu()
         #file.Append(wx.ID_ANY,  'Quit', '' )
         #menubar.Append(file, "&File")
         #self.SetMenuBar(menubar)
 
-        self.user_list = ['shanmuk','raji','karthik','prathi']
-        self.process_list = ['Novas','vim', 'python']
-        self.params_list = ['mem','CPU']
+        self.user_list = list(set(self.top_user_df.transpose().max().reset_index(1).index))
+        self.process_list = list(set(self.top_process_df.transpose().max().reset_index(1).index))
+        self.params_list = ['RES','%CPU']
 
         self.panel = wx.Panel(self, -1)
 
@@ -40,6 +51,7 @@ class FitTopFrame(wx.Frame):
         # Process List Box
         self.process_listbox = wx.ListBox(self.panel, wx.ID_ANY, wx.DefaultPosition, (170, 130), self.process_list, wx.LB_MULTIPLE)
         self.process_listbox.SetSelection(0)
+        
         # Check Box to select all processes
         self.all_process_cb = wx.CheckBox(self.panel, wx.ID_ANY, 'Select All')
         self.all_process_cb.SetValue(False)
@@ -74,13 +86,14 @@ class FitTopFrame(wx.Frame):
 
         # Buttons for each type of plot.
         self.user_vs_param_summary_btn = wx.Button(self.panel, wx.ID_ANY, 'User(s) vs Param')
-        #self.user_vs_param_summary_btn.Bind(wx.EVT_BUTTON, self.userVsParamSummary)
+        self.user_vs_param_summary_btn.Bind(wx.EVT_BUTTON, self.userVsParamSummary)
         self.process_vs_param_summary_btn = wx.Button(self.panel, wx.ID_ANY, 'Process(s) vs Param')
 
         self.summary_plot_static_box_sizer.Add(self.user_vs_param_summary_btn, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 10)
         self.summary_plot_static_box_sizer.Add(self.process_vs_param_summary_btn, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 10)
 
         self.peruserparam_vs_time_btn = wx.Button(self.panel, wx.ID_ANY, 'Time vs per User Param')
+        self.peruserparam_vs_time_btn.Bind(wx.EVT_BUTTON, self.perUserParamVsTime)
         self.perprocessparam_vs_time_btn = wx.Button(self.panel, wx.ID_ANY, 'Time vs per Process Param')
 
         self.time_plot_static_box_sizer.Add(self.peruserparam_vs_time_btn, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 10)
@@ -97,6 +110,34 @@ class FitTopFrame(wx.Frame):
 
         self.panel.SetSizerAndFit(self.main_grid_sizer)
 
+    def userVsParamSummary(self, event):
+        self.user_vs_param_summary_plotter = FitPlotter((2,2))
+        self.plotter['uservsparam_summary'] = self.user_vs_param_summary_plotter
+        self.loadTopData()
+        self.top_user_df = self.top_user_df.drop(['%CPU'],level=1)
+        ser = self.top_user_df.transpose().max().reset_index('minor').drop('minor',axis=1)
+        self.user_vs_param_summary_plotter.grouped_plot(ser,1,'max')
+        ser = self.top_user_df.transpose().min().reset_index('minor').drop('minor',axis=1)
+        self.user_vs_param_summary_plotter.grouped_plot(ser,2,'min')
+        ser = self.top_user_df.transpose().mean().reset_index('minor').drop('minor',axis=1)
+        self.user_vs_param_summary_plotter.grouped_plot(ser,3,'mean')
+        ser = self.top_user_df.transpose().std().reset_index('minor').drop('minor',axis=1)
+        self.user_vs_param_summary_plotter.grouped_plot(ser,4,'std')
+        self.user_vs_param_summary_plotter.Center()
+        self.user_vs_param_summary_plotter.Show(True)
+
+        return True
+    
+    def perUserParamVsTime(self, event):
+        self.userparam_vs_time_plotter = FitPlotter((1,1))
+        self.plotter['userparamvstime'] = self.userparam_vs_time_plotter
+        self.loadTopData()
+        df = self.top_user_df.drop(['%CPU'],level=1).transpose()
+        self.userparam_vs_time_plotter.simple_plot(df,"Mem Vs Time")
+        self.userparam_vs_time_plotter.Center()
+        self.userparam_vs_time_plotter.Show(True)        
+        
+             
     def toggleAllUserSelect(self, event):
         if self.all_user_cb.GetValue() == True:
             for i in range(self.user_listbox.GetCount()):
@@ -116,9 +157,16 @@ class FitTopFrame(wx.Frame):
             for i in range(self.process_listbox.GetCount()):
                 self.process_listbox.Deselect(i)
             self.process_listbox.SetSelection(0)
+        
         return True
-            
-    def bind_user_vs_param_summary_btn(self,handler):
-        self.user_vs_param_summary_btn.Bind(wx.EVT_BUTTON,handler)
+    
+    def loadTopData(self,analyze='USER'):
+        if self.parsedir != "" and not self.top_user_df:
+            self.parsedir = self.parsedir+'/'
+            self.top_dir_parser = TopDirParser(self.parsedir,'USER')
+            self.top_user_df=self.top_dir_parser.GetDFUser()
+            self.top_process_df=self.top_dir_parser.GetDFProcess()
+        
         return True
+
 

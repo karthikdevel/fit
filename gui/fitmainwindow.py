@@ -1,4 +1,5 @@
 import wx
+from fittopframe import FitTopFrame
 
 class FitMainWindow(wx.Frame):
     def __init__(self, parent, id, title):
@@ -12,6 +13,7 @@ class FitMainWindow(wx.Frame):
         self.main_grid_bag_sizer = wx.GridBagSizer(9,9)
         
         self.dir_name = wx.TextCtrl(self.panel, wx.ID_ANY, size=(180, 20))
+        self.dir_name.SetValue("Enter")
         self.log_path = wx.Button(self.panel, wx.ID_ANY, "Logs Path")
         self.log_path.Bind(wx.EVT_BUTTON, self.opendir)
         
@@ -22,6 +24,7 @@ class FitMainWindow(wx.Frame):
         self.free_cb.SetValue(False)
 
         self.launch_button = wx.Button(self.panel, wx.ID_ANY, "Launch")
+        self.launch_button.Bind(wx.EVT_BUTTON,self.LaunchTopFrame)        
 
         # Add to the correct grid_bag.
         self.main_grid_bag_sizer.Add(self.dir_name, (0,0), (1,3), flag = wx.EXPAND)
@@ -42,10 +45,13 @@ class FitMainWindow(wx.Frame):
         if dlg.ShowModal() == wx.ID_OK:
             self.dir_name.SetValue(dlg.GetPath())
         dlg.Destroy()
-        
-    def get_current_dir(self):
-        return self.dir_name.GetValue()
     
-    def bind_launch_button(self, handler):
-        self.launch_button.Bind(wx.EVT_BUTTON,handler)
+    def LaunchTopFrame(self,event):
+        if self.dir_name.GetValue() != "Enter":
+            self.top_frame = FitTopFrame(None, wx.ID_ANY, self.dir_name.GetValue(), 'Top Window')
+            self.top_frame.Centre()
+            self.frames = dict()
+            self.top_frame.Show(True)
+        
+        return True        
         

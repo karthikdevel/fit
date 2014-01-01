@@ -31,9 +31,12 @@ class FitPlotter(wx.Frame):
         self.toolbar.Show()
         self.panel.SetSizerAndFit(self.sizer)
 
-    def grouped_plot(self,grouped,subplot,title):
+    def grouped_plot(self,plottable,subplot,title):
         if subplot <= self.max_subplots:
-            grouped.plot(kind='bar',ax=self.axes[subplot-1],title=title)
+            plottable.plot(kind='bar',ax=self.axes[subplot-1],title=title)
         else:
             return False
+        
+    def simple_plot(self,plottable,title):
+        plottable.plot(ax=self.axes[0],title=title)
 
