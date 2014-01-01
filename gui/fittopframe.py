@@ -110,18 +110,28 @@ class FitTopFrame(wx.Frame):
 
         self.panel.SetSizerAndFit(self.main_grid_sizer)
 
+    def GetDropList(self, itemlist, listbox):
+        sel_list = [listbox.GetString(i) for i in listbox.GetSelections()]
+        drop_list = []
+        for i in itemlist:
+            if i not in sel_list:
+                drop_list.append(i)
+                
+        return drop_list
+
     def userVsParamSummary(self, event):
         self.user_vs_param_summary_plotter = FitPlotter((2,2))
         self.plotter['uservsparam_summary'] = self.user_vs_param_summary_plotter
         self.loadTopData()
-        self.top_user_df = self.top_user_df.drop(['%CPU'],level=1)
-        ser = self.top_user_df.transpose().max().reset_index('minor').drop('minor',axis=1)
+        drop_list = self.GetDropList(self.params_list,self.param_listbox)
+        df = self.top_user_df.drop(drop_list,level=1)
+        ser = df.transpose().max().reset_index('minor').drop('minor',axis=1)
         self.user_vs_param_summary_plotter.grouped_plot(ser,1,'max')
-        ser = self.top_user_df.transpose().min().reset_index('minor').drop('minor',axis=1)
+        ser = df.transpose().min().reset_index('minor').drop('minor',axis=1)
         self.user_vs_param_summary_plotter.grouped_plot(ser,2,'min')
-        ser = self.top_user_df.transpose().mean().reset_index('minor').drop('minor',axis=1)
+        ser = df.transpose().mean().reset_index('minor').drop('minor',axis=1)
         self.user_vs_param_summary_plotter.grouped_plot(ser,3,'mean')
-        ser = self.top_user_df.transpose().std().reset_index('minor').drop('minor',axis=1)
+        ser = df.transpose().std().reset_index('minor').drop('minor',axis=1)
         self.user_vs_param_summary_plotter.grouped_plot(ser,4,'std')
         self.user_vs_param_summary_plotter.Center()
         self.user_vs_param_summary_plotter.Show(True)
@@ -132,7 +142,8 @@ class FitTopFrame(wx.Frame):
         self.userparam_vs_time_plotter = FitPlotter((1,1))
         self.plotter['userparamvstime'] = self.userparam_vs_time_plotter
         self.loadTopData()
-        df = self.top_user_df.drop(['%CPU'],level=1).transpose()
+        drop_list = self.GetDropList(self.params_list,self.param_listbox)
+        df = self.top_user_df.drop(drop_list,level=1).transpose()
         self.userparam_vs_time_plotter.simple_plot(df,"Mem Vs Time")
         self.userparam_vs_time_plotter.Center()
         self.userparam_vs_time_plotter.Show(True)        
