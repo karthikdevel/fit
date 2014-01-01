@@ -12,10 +12,8 @@ class FitTopFrame(wx.Frame):
         
         self.parsedir = parsedir
         self.plotter= dict()
-        self.top_user_df = pd.DataFrame()
-        self.top_process_df = pd.DataFrame()
         
-        self.loadTopData()
+        self.top_dir_parser = self.loadTopData()
         
         #menubar = wx.MenuBar()
         #file = wx.Menu()
@@ -23,8 +21,8 @@ class FitTopFrame(wx.Frame):
         #menubar.Append(file, "&File")
         #self.SetMenuBar(menubar)
 
-        self.user_list = list(set(self.top_user_df.transpose().max().reset_index(1).index))
-        self.process_list = list(set(self.top_process_df.transpose().max().reset_index(1).index))
+        self.user_list = self.top_dir_parser.GetUserList()
+        self.process_list = self.top_dir_parser.GetProcessList()
         self.params_list = ['RES','%CPU']
 
         self.panel = wx.Panel(self, -1)
@@ -41,7 +39,7 @@ class FitTopFrame(wx.Frame):
         self.param_listbox_sizer = wx.StaticBoxSizer(param_static_box,wx.VERTICAL)
 
         # User List Box
-        self.user_listbox = wx.ListBox(self.panel, wx.ID_ANY, wx.DefaultPosition, (170, 130), self.user_list, wx.LB_MULTIPLE)
+        self.user_listbox = wx.ListBox(self.panel, wx.ID_ANY, wx.DefaultPosition, (170, 130), self.user_list, wx.LB_MULTIPLE | wx.LB_SORT)
         self.user_listbox.SetSelection(0)
         # Check Box to select all users
         self.all_user_cb = wx.CheckBox(self.panel, wx.ID_ANY, 'Select All')
@@ -49,7 +47,7 @@ class FitTopFrame(wx.Frame):
         self.all_user_cb.Bind(wx.EVT_CHECKBOX, self.toggleAllUserSelect)
 
         # Process List Box
-        self.process_listbox = wx.ListBox(self.panel, wx.ID_ANY, wx.DefaultPosition, (170, 130), self.process_list, wx.LB_MULTIPLE)
+        self.process_listbox = wx.ListBox(self.panel, wx.ID_ANY, wx.DefaultPosition, (170, 130), self.process_list, wx.LB_MULTIPLE | wx.LB_SORT)
         self.process_listbox.SetSelection(0)
         
         # Check Box to select all processes
@@ -88,6 +86,7 @@ class FitTopFrame(wx.Frame):
         self.user_vs_param_summary_btn = wx.Button(self.panel, wx.ID_ANY, 'User(s) vs Param')
         self.user_vs_param_summary_btn.Bind(wx.EVT_BUTTON, self.userVsParamSummary)
         self.process_vs_param_summary_btn = wx.Button(self.panel, wx.ID_ANY, 'Process(s) vs Param')
+        self.process_vs_param_summary_btn.Bind(wx.EVT_BUTTON, self.processVsParamSummary)
 
         self.summary_plot_static_box_sizer.Add(self.user_vs_param_summary_btn, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 10)
         self.summary_plot_static_box_sizer.Add(self.process_vs_param_summary_btn, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 10)
@@ -95,6 +94,7 @@ class FitTopFrame(wx.Frame):
         self.peruserparam_vs_time_btn = wx.Button(self.panel, wx.ID_ANY, 'Time vs per User Param')
         self.peruserparam_vs_time_btn.Bind(wx.EVT_BUTTON, self.perUserParamVsTime)
         self.perprocessparam_vs_time_btn = wx.Button(self.panel, wx.ID_ANY, 'Time vs per Process Param')
+        self.perprocessparam_vs_time_btn.Bind(wx.EVT_BUTTON, self.perProcessParamVsTime)
 
         self.time_plot_static_box_sizer.Add(self.peruserparam_vs_time_btn, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 10)
         self.time_plot_static_box_sizer.Add(self.perprocessparam_vs_time_btn, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 10)
@@ -118,13 +118,27 @@ class FitTopFrame(wx.Frame):
                 drop_list.append(i)
                 
         return drop_list
+    
+    def GetSelList(self, itemlist, listbox):
+        sel_list = [listbox.GetString(i) for i in listbox.GetSelections()]
+        drop_list = []
+        for i in itemlist:
+            if i in sel_list:
+                drop_list.append(i)
+                
+        return drop_list    
 
     def userVsParamSummary(self, event):
         self.user_vs_param_summary_plotter = FitPlotter((2,2))
         self.plotter['uservsparam_summary'] = self.user_vs_param_summary_plotter
-        self.loadTopData()
+        df = self.top_dir_parser.GenDFUser(self.GetSelList(self.process_list,self.process_listbox))
         drop_list = self.GetDropList(self.params_list,self.param_listbox)
-        df = self.top_user_df.drop(drop_list,level=1)
+        df = df.drop(drop_list,level=1)
+        drop_list = self.GetDropList(self.user_list,self.user_listbox)
+        for i in drop_list[:]:
+            if i not in df.index:
+                drop_list.remove(i)
+        df = df.drop(drop_list)        
         ser = df.transpose().max().reset_index('minor').drop('minor',axis=1)
         self.user_vs_param_summary_plotter.grouped_plot(ser,1,'max')
         ser = df.transpose().min().reset_index('minor').drop('minor',axis=1)
@@ -141,12 +155,57 @@ class FitTopFrame(wx.Frame):
     def perUserParamVsTime(self, event):
         self.userparam_vs_time_plotter = FitPlotter((1,1))
         self.plotter['userparamvstime'] = self.userparam_vs_time_plotter
-        self.loadTopData()
+        df = self.top_dir_parser.GenDFUser(self.GetSelList(self.process_list,self.process_listbox))
         drop_list = self.GetDropList(self.params_list,self.param_listbox)
-        df = self.top_user_df.drop(drop_list,level=1).transpose()
-        self.userparam_vs_time_plotter.simple_plot(df,"Mem Vs Time")
+        df = df.drop(drop_list,level=1)
+        drop_list = self.GetDropList(self.user_list,self.user_listbox)
+        for i in drop_list[:]:
+            if i not in df.index:
+                drop_list.remove(i)        
+        df = df.drop(drop_list)
+        self.userparam_vs_time_plotter.simple_plot(df.transpose(),"UserMem Vs Time")
         self.userparam_vs_time_plotter.Center()
         self.userparam_vs_time_plotter.Show(True)        
+
+    def processVsParamSummary(self, event):
+        self.process_vs_param_summary_plotter = FitPlotter((2,2))
+        self.plotter['processvsparam_summary'] = self.process_vs_param_summary_plotter
+        df = self.top_dir_parser.GenDFProcess(self.GetSelList(self.process_list,self.process_listbox))
+        drop_list = self.GetDropList(self.params_list,self.param_listbox)
+        df = df.drop(drop_list,level=1)
+        drop_list = self.GetDropList(self.process_list,self.process_listbox)
+        for i in drop_list[:]:
+            if i not in df.index:
+                drop_list.remove(i)
+        df = df.drop(drop_list)        
+        ser = df.transpose().max().reset_index('minor').drop('minor',axis=1)
+        self.process_vs_param_summary_plotter.grouped_plot(ser,1,'max')
+        ser = df.transpose().min().reset_index('minor').drop('minor',axis=1)
+        self.process_vs_param_summary_plotter.grouped_plot(ser,2,'min')
+        ser = df.transpose().mean().reset_index('minor').drop('minor',axis=1)
+        self.process_vs_param_summary_plotter.grouped_plot(ser,3,'mean')
+        ser = df.transpose().std().reset_index('minor').drop('minor',axis=1)
+        self.process_vs_param_summary_plotter.grouped_plot(ser,4,'std')
+        self.process_vs_param_summary_plotter.Center()
+        self.process_vs_param_summary_plotter.Show(True)
+
+        return True
+    
+    def perProcessParamVsTime(self, event):
+        self.processparam_vs_time_plotter = FitPlotter((1,1))
+        self.plotter['processparamvstime'] = self.processparam_vs_time_plotter
+        df = self.top_dir_parser.GenDFProcess(self.GetSelList(self.process_list,self.process_listbox))
+        drop_list = self.GetDropList(self.params_list,self.param_listbox)
+        df = df.drop(drop_list,level=1)
+        drop_list = self.GetDropList(self.process_list,self.process_listbox)
+        for i in drop_list[:]:
+            if i not in df.index:
+                drop_list.remove(i)        
+        df = df.drop(drop_list)
+        self.processparam_vs_time_plotter.simple_plot(df.transpose(),"ProcessMem Vs Time")
+        self.processparam_vs_time_plotter.Center()
+        self.processparam_vs_time_plotter.Show(True)        
+            
         
              
     def toggleAllUserSelect(self, event):
@@ -171,13 +230,8 @@ class FitTopFrame(wx.Frame):
         
         return True
     
-    def loadTopData(self,analyze='USER'):
-        if self.parsedir != "" and not self.top_user_df:
+    def loadTopData(self):
+        if self.parsedir != "":
             self.parsedir = self.parsedir+'/'
-            self.top_dir_parser = TopDirParser(self.parsedir,'USER')
-            self.top_user_df=self.top_dir_parser.GetDFUser()
-            self.top_process_df=self.top_dir_parser.GetDFProcess()
-        
-        return True
-
+            return TopDirParser(self.parsedir,'USER')
 
