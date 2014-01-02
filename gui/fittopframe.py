@@ -165,12 +165,13 @@ class FitTopFrame(wx.Frame):
         df = df.drop(drop_list)
         self.userparam_vs_time_plotter.simple_plot(df.transpose(),"UserMem Vs Time")
         self.userparam_vs_time_plotter.Center()
-        self.userparam_vs_time_plotter.Show(True)        
+        self.userparam_vs_time_plotter.Show(True)
+        return True
 
     def processVsParamSummary(self, event):
         self.process_vs_param_summary_plotter = FitPlotter((2,2))
         self.plotter['processvsparam_summary'] = self.process_vs_param_summary_plotter
-        df = self.top_dir_parser.GenDFProcess(self.GetSelList(self.process_list,self.process_listbox))
+        df = self.top_dir_parser.GenDFProcess(self.GetSelList(self.user_list,self.user_listbox))
         drop_list = self.GetDropList(self.params_list,self.param_listbox)
         df = df.drop(drop_list,level=1)
         drop_list = self.GetDropList(self.process_list,self.process_listbox)
@@ -194,7 +195,7 @@ class FitTopFrame(wx.Frame):
     def perProcessParamVsTime(self, event):
         self.processparam_vs_time_plotter = FitPlotter((1,1))
         self.plotter['processparamvstime'] = self.processparam_vs_time_plotter
-        df = self.top_dir_parser.GenDFProcess(self.GetSelList(self.process_list,self.process_listbox))
+        df = self.top_dir_parser.GenDFProcess(self.GetSelList(self.user_list,self.user_listbox))
         drop_list = self.GetDropList(self.params_list,self.param_listbox)
         df = df.drop(drop_list,level=1)
         drop_list = self.GetDropList(self.process_list,self.process_listbox)
@@ -204,7 +205,9 @@ class FitTopFrame(wx.Frame):
         df = df.drop(drop_list)
         self.processparam_vs_time_plotter.simple_plot(df.transpose(),"ProcessMem Vs Time")
         self.processparam_vs_time_plotter.Center()
-        self.processparam_vs_time_plotter.Show(True)        
+        self.processparam_vs_time_plotter.Show(True)
+        
+        return True
             
         
              
