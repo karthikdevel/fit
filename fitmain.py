@@ -2,9 +2,11 @@
 # listbox.py
 
 import wx
+import sys
 
-from fitmainwindow import FitMainWindow
+from gui.fitmainwindow import FitMainWindow
 
+sys.path.append('\\home\\karthik\\work\\python\\fit')
 
 class FitApp(wx.App):
     def OnInit(self):
