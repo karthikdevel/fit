@@ -10,8 +10,6 @@ myglobal = np.arange(100)
 myglobalidx = 1
 
 def processMG(arg1):
-    #return myglobal[myglobalidx%100]
-    #return float(myglobalidx%100)
     if arg1 == None:
         return float(0)
     elif 'm' in arg1:
@@ -21,41 +19,68 @@ def processMG(arg1):
     else:
         return float(arg1)
 
+class TopDirParser:
+    def __init__(self,targetdir=None,analyze='USER'):
         
-#def gen_user_time_series(panel, user, resource):
+        if targetdir != None:
+            filelist = os.listdir(targetdir) 
+            
+            self.panel_dict = dict()
+            for ifile in filelist:
+                fs = pd.to_datetime(ifile[:ifile.find('.')])
+                self.panel_dict[fs] = pd.read_csv(targetdir+ifile,
+                                                        sep='\s+',
+                                                        skiprows=range(6),
+                                                        comment='<defunct>',
+                                                        #usecols = ['RES'],
+                                                        squeeze=False,
+                                                        converters={'RES':processMG})
+    def GetUserList(self):
+        if not self.panel_dict:
+            return None
+        else:
+            x = set()
+            for i in self.panel_dict:
+                x |= set(self.panel_dict[i]['USER'].unique())
+             
+            #is this clean?   
+            x.remove(None)
+            return list(x)
     
-def top_dir_parser(targetdir ='/home/karthik/work/python/bigdata/topreports/'):
-    filelist = os.listdir(targetdir) 
+    def GetProcessList(self):
+        if not self.panel_dict:
+            return None
+        else:
+            x = set()
+            for i in self.panel_dict:
+                x |= set(self.panel_dict[i]['COMMAND'].unique())
+            
+            #is this clean? 
+            x.remove(None)
+            return list(x)
+
+    def GenDFUser(self, process_sel_list):
+        DF_user = pd.DataFrame()
+        panel_dict_user = dict()
+        for fs in self.panel_dict:
+            df = self.panel_dict[fs][['RES','%CPU','USER','COMMAND']]
+            df = df[df['COMMAND'].map(lambda x: True if x in process_sel_list else False)]
+            DF_user = df.reset_index(1,drop=True).drop('COMMAND',axis=1)
+            panel_dict_user[fs] = DF_user.groupby('USER').sum()
+        
+        pnl = pd.Panel.from_dict(panel_dict_user)
+        DF_user = pnl.to_frame(filter_observations=False)        
+        return DF_user
     
-    panel_dict=dict()
-    
-    for ifile in filelist:
-        ifilestamp=pd.to_datetime(ifile[:ifile.find('.')])
-        panel_dict[ifilestamp] = pd.read_csv(targetdir+ifile,
-                                                sep='\s+',
-                                                skiprows=range(6),
-                                                comment='<defunct>')
-    
-        panel_dict[ifilestamp]['RES'] = panel_dict[ifilestamp]['RES'].map(processMG)
-        myglobalidx += 1
-        #tempgrouped = panel_dict[ifilestamp]['RES'].groupby(panel_dict[ifilestamp]['USER'])
-    
-    pnl=pd.Panel.from_dict(panel_dict)
-    
-    return pnl
-    
-    #plt.plot(pnl.keys(),[pnl[i]['RES'].max() for i in pnl.keys()])
-    #total_data = pd.DataFrame()
-    #total_data = pd.concat(panel_dict.values())
-    
-    #total_data = total_data.fillna('0')
-    #total_data['RES'] = total_data['RES'].map(processMG)
-    #grouped = total_data['RES'].groupby(total_data['USER'])
-    
-    #fig, axes = plt.subplots(2, 2)
-    #temp = grouped.mean().plot(kind='bar',ax=axes[0,0],title='mean')
-    #grouped.std().plot(kind='bar',ax=axes[1,0],title='std')
-    #temp=grouped.min().plot(kind='bar',ax=axes[0,1],title='min',ylim=temp.get_ylim())
-    #grouped.max().plot(kind='bar',ax=axes[1,1],title='max')
-    
-    
+    def GenDFProcess(self,user_sel_list):
+        DF_process = pd.DataFrame()
+        panel_dict_process = dict()
+        for fs in self.panel_dict:
+            df = self.panel_dict[fs][['RES','%CPU','USER','COMMAND']]
+            df = df[df['USER'].map(lambda x: True if x in user_sel_list else False)]
+            DF_process = df.reset_index(1,drop=True).drop('USER',axis=1)
+            panel_dict_process[fs] = DF_process.groupby('COMMAND').sum()
+        
+        pnl = pd.Panel.from_dict(panel_dict_process)
+        DF_process = pnl.to_frame(filter_observations=False)        
+        return DF_process    
