@@ -21,13 +21,9 @@ class FitPlotter(wx.Frame):
         self.canvas = FigureCanvas(self.panel, -1, self.figure)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.canvas, 1, wx.LEFT | wx.TOP | wx.GROW)
-        # instantiate the Navigation Toolbar
         self.toolbar = NavigationToolbar2Wx(self.canvas)
-        # needed to support Windows systems
         #self.toolbar.Realize()
-        # add it to the sizer
         self.sizer.Add(self.toolbar, 0, wx.LEFT | wx.EXPAND)
-        # explicitly show the toolbar
         self.toolbar.Show()
         self.panel.SetSizerAndFit(self.sizer)
 
@@ -37,6 +33,7 @@ class FitPlotter(wx.Frame):
         else:
             return False
         
-    def simple_plot(self,plottable,title):
-        plottable.plot(ax=self.axes[0],title=title)
+    def simple_plot(self,plottable,**kwargs):
+        plottable.plot(ax=self.axes[0],**kwargs)
+                
 

@@ -1,11 +1,11 @@
 import wx
 from fitplotter import FitPlotter
-from  parser.topparser import TopDirParser
+from  topparser import TopDirParser
 import pandas as pd
 import numpy as np
 
 class FitTopFrame(wx.Frame):
-    def __init__(self, parent, id, parsedir, title):
+    def __init__(self, parent, id, parsedir, start_date, end_date, title):
         wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, (750, 450))
 
         self.SetMinSize((750, 450))
@@ -13,16 +13,10 @@ class FitTopFrame(wx.Frame):
         self.parsedir = parsedir
         self.plotter= dict()
         
-        self.top_dir_parser = self.loadTopData()
+        self.top_dir_parser = self.loadTopData(start_date, end_date)
         
-        #menubar = wx.MenuBar()
-        #file = wx.Menu()
-        #file.Append(wx.ID_ANY,  'Quit', '' )
-        #menubar.Append(file, "&File")
-        #self.SetMenuBar(menubar)
-
-        self.user_list = self.top_dir_parser.GetUserList()
-        self.process_list = self.top_dir_parser.GetProcessList()
+        self.user_list = self.top_dir_parser.GetItemList('USER')
+        self.process_list = self.top_dir_parser.GetItemList('COMMAND')
         self.params_list = ['RES','%CPU']
 
         self.panel = wx.Panel(self, -1)
@@ -32,7 +26,7 @@ class FitTopFrame(wx.Frame):
 
         # Static box for each list box
         user_static_box = wx.StaticBox(self.panel, wx.ID_ANY, "User List")
-        self.user_static_box = wx.StaticBoxSizer(user_static_box,wx.VERTICAL)
+        self.user_static_box_sizer = wx.StaticBoxSizer(user_static_box,wx.VERTICAL)
         process_static_box = wx.StaticBox(self.panel, wx.ID_ANY, label="Process List")
         self.process_listbox_sizer = wx.StaticBoxSizer(process_static_box,wx.VERTICAL)
         param_static_box = wx.StaticBox(self.panel, wx.ID_ANY, label="Param List")
@@ -59,14 +53,14 @@ class FitTopFrame(wx.Frame):
         self.param_listbox = wx.ListBox(self.panel, wx.ID_ANY, wx.DefaultPosition, (170, 130), self.params_list, wx.LB_SINGLE)
         self.param_listbox.SetSelection(0)
 
-        self.user_static_box.Add(self.user_listbox, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 10)
-        self.user_static_box.Add(self.all_user_cb, 0, wx.BOTTOM | wx.CENTER)
+        self.user_static_box_sizer.Add(self.user_listbox, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 10)
+        self.user_static_box_sizer.Add(self.all_user_cb, 0, wx.BOTTOM | wx.CENTER)
         self.process_listbox_sizer.Add(self.process_listbox, proportion = 1,  flag = wx.ALL | wx.EXPAND, border = 10)
         self.process_listbox_sizer.Add(self.all_process_cb, 0, wx.BOTTOM | wx.CENTER)
         self.param_listbox_sizer.Add(self.param_listbox, proportion = 1,  flag = wx.ALL | wx.EXPAND, border = 10)
 
         # Add Each list box to main grid sizer.
-        self.main_grid_sizer.Add(self.user_static_box, proportion = 1,  flag = wx.ALL | wx.EXPAND | wx.ALIGN_TOP)
+        self.main_grid_sizer.Add(self.user_static_box_sizer, proportion = 1,  flag = wx.ALL | wx.EXPAND | wx.ALIGN_TOP)
 
         self.main_grid_sizer.Add(self.process_listbox_sizer, proportion = 1, flag = wx.ALL | wx.EXPAND | wx.ALIGN_TOP)
 
@@ -93,11 +87,17 @@ class FitTopFrame(wx.Frame):
 
         self.peruserparam_vs_time_btn = wx.Button(self.panel, wx.ID_ANY, 'Time vs per User Param')
         self.peruserparam_vs_time_btn.Bind(wx.EVT_BUTTON, self.perUserParamVsTime)
+        self.enable_user_locall_sum = wx.CheckBox(self.panel, wx.ID_ANY, 'Selected Total')
+        self.enable_user_locall_sum.SetValue(False)        
         self.perprocessparam_vs_time_btn = wx.Button(self.panel, wx.ID_ANY, 'Time vs per Process Param')
         self.perprocessparam_vs_time_btn.Bind(wx.EVT_BUTTON, self.perProcessParamVsTime)
+        self.enable_process_locall_sum = wx.CheckBox(self.panel, wx.ID_ANY, 'Selected Total')
+        self.enable_process_locall_sum.SetValue(False)
 
         self.time_plot_static_box_sizer.Add(self.peruserparam_vs_time_btn, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 10)
+        self.time_plot_static_box_sizer.Add(self.enable_user_locall_sum, 0, flag = wx.RIGHT | wx.CENTER)
         self.time_plot_static_box_sizer.Add(self.perprocessparam_vs_time_btn, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 10)
+        self.time_plot_static_box_sizer.Add(self.enable_process_locall_sum, 0, flag = wx.RIGHT | wx.CENTER)
 
         self.user_vs_process_btn = wx.Button(self.panel, wx.ID_ANY, 'User vs Process')
 
@@ -109,6 +109,13 @@ class FitTopFrame(wx.Frame):
         self.main_grid_sizer.Add(self.scatter_plot_static_box_sizer, proportion = 1, flag = wx.ALL | wx.EXPAND | wx.ALIGN_TOP)
 
         self.panel.SetSizerAndFit(self.main_grid_sizer)
+
+    
+    def loadTopData(self, start, end):
+        if self.parsedir != "":
+            self.parsedir = self.parsedir+'/'
+            return TopDirParser(start, end, self.parsedir)
+
 
     def GetDropList(self, itemlist, listbox):
         sel_list = [listbox.GetString(i) for i in listbox.GetSelections()]
@@ -131,7 +138,8 @@ class FitTopFrame(wx.Frame):
     def userVsParamSummary(self, event):
         self.user_vs_param_summary_plotter = FitPlotter((2,2))
         self.plotter['uservsparam_summary'] = self.user_vs_param_summary_plotter
-        df = self.top_dir_parser.GenDFUser(self.GetSelList(self.process_list,self.process_listbox))
+        preselector={'COMMAND':self.GetSelList(self.process_list,self.process_listbox)}
+        df = self.top_dir_parser.GenDF('USER',False,preselector)
         drop_list = self.GetDropList(self.params_list,self.param_listbox)
         df = df.drop(drop_list,level=1)
         drop_list = self.GetDropList(self.user_list,self.user_listbox)
@@ -155,7 +163,8 @@ class FitTopFrame(wx.Frame):
     def perUserParamVsTime(self, event):
         self.userparam_vs_time_plotter = FitPlotter((1,1))
         self.plotter['userparamvstime'] = self.userparam_vs_time_plotter
-        df = self.top_dir_parser.GenDFUser(self.GetSelList(self.process_list,self.process_listbox))
+        preselector={'COMMAND':self.GetSelList(self.process_list,self.process_listbox)}
+        df,gd = self.top_dir_parser.GenDF('USER',True,preselector)
         drop_list = self.GetDropList(self.params_list,self.param_listbox)
         df = df.drop(drop_list,level=1)
         drop_list = self.GetDropList(self.user_list,self.user_listbox)
@@ -163,7 +172,10 @@ class FitTopFrame(wx.Frame):
             if i not in df.index:
                 drop_list.remove(i)        
         df = df.drop(drop_list)
-        self.userparam_vs_time_plotter.simple_plot(df.transpose(),"UserMem Vs Time")
+        self.userparam_vs_time_plotter.simple_plot(df.transpose(),title="UserMem Vs Time")
+        if self.enable_user_locall_sum.GetValue() == True:
+            self.userparam_vs_time_plotter.simple_plot(df.sum(),label='Selected Total', style = '--',color='r')
+        self.userparam_vs_time_plotter.simple_plot(gd,label='Global Total', style = '--',color='g')
         self.userparam_vs_time_plotter.Center()
         self.userparam_vs_time_plotter.Show(True)
         return True
@@ -171,7 +183,8 @@ class FitTopFrame(wx.Frame):
     def processVsParamSummary(self, event):
         self.process_vs_param_summary_plotter = FitPlotter((2,2))
         self.plotter['processvsparam_summary'] = self.process_vs_param_summary_plotter
-        df = self.top_dir_parser.GenDFProcess(self.GetSelList(self.user_list,self.user_listbox))
+        preselector={'USER':self.GetSelList(self.user_list,self.user_listbox)}
+        df = self.top_dir_parser.GenDF('COMMAND',False,preselector)
         drop_list = self.GetDropList(self.params_list,self.param_listbox)
         df = df.drop(drop_list,level=1)
         drop_list = self.GetDropList(self.process_list,self.process_listbox)
@@ -195,7 +208,8 @@ class FitTopFrame(wx.Frame):
     def perProcessParamVsTime(self, event):
         self.processparam_vs_time_plotter = FitPlotter((1,1))
         self.plotter['processparamvstime'] = self.processparam_vs_time_plotter
-        df = self.top_dir_parser.GenDFProcess(self.GetSelList(self.user_list,self.user_listbox))
+        preselector={'USER':self.GetSelList(self.user_list,self.user_listbox)}
+        df,gd = self.top_dir_parser.GenDF('COMMAND',True,preselector)
         drop_list = self.GetDropList(self.params_list,self.param_listbox)
         df = df.drop(drop_list,level=1)
         drop_list = self.GetDropList(self.process_list,self.process_listbox)
@@ -203,7 +217,10 @@ class FitTopFrame(wx.Frame):
             if i not in df.index:
                 drop_list.remove(i)        
         df = df.drop(drop_list)
-        self.processparam_vs_time_plotter.simple_plot(df.transpose(),"ProcessMem Vs Time")
+        self.processparam_vs_time_plotter.simple_plot(df.transpose(),title="ProcessMem Vs Time")
+        if self.enable_process_locall_sum.GetValue() == True:
+            self.processparam_vs_time_plotter.simple_plot(df.sum(),label='Selected Total', style = '--',color='r')
+        self.processparam_vs_time_plotter.simple_plot(gd,label='Global Total', style = '--',color='g')        
         self.processparam_vs_time_plotter.Center()
         self.processparam_vs_time_plotter.Show(True)
         
@@ -232,9 +249,3 @@ class FitTopFrame(wx.Frame):
             self.process_listbox.SetSelection(0)
         
         return True
-    
-    def loadTopData(self):
-        if self.parsedir != "":
-            self.parsedir = self.parsedir+'/'
-            return TopDirParser(self.parsedir,'USER')
-
