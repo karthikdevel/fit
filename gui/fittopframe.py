@@ -1,6 +1,6 @@
 import wx
 from fitplotter import FitPlotter
-from  topparser import TopDirParser
+from  parser.topparser import TopDirParser
 import pandas as pd
 import numpy as np
 
