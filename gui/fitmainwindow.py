@@ -10,6 +10,7 @@ class FitMainWindow(wx.Frame):
         self.end_date = ""
 
         self.SetMinSize((650, 300))
+        self.Center()
 
         self.panel = wx.Panel(self, -1)
 
@@ -79,7 +80,7 @@ class FitMainWindow(wx.Frame):
     def LaunchTopFrame(self,event):
         if self.dir_name.GetValue() != "Enter":
             self.top_frame = FitTopFrame(None, wx.ID_ANY, self.dir_name.GetValue(), self.start_date, self.end_date, title='Top Window')
-            self.top_frame.Centre()
+            self.top_frame.Centre(True)
             self.frames = dict()
             self.top_frame.Show(True)
         

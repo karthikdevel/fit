@@ -1,5 +1,6 @@
 import wx
 from fitplotter import FitPlotter
+#from fitdialog import FitDialog
 from  parser.topparser import TopDirParser
 import pandas as pd
 import numpy as np
@@ -9,6 +10,7 @@ class FitTopFrame(wx.Frame):
         wx.Frame.__init__(self, parent, id, title, wx.DefaultPosition, (750, 450))
 
         self.SetMinSize((750, 450))
+        self.Center(True)
         
         self.parsedir = parsedir
         self.plotter= dict()
@@ -18,6 +20,13 @@ class FitTopFrame(wx.Frame):
         self.user_list = self.top_dir_parser.GetItemList('USER')
         self.process_list = self.top_dir_parser.GetItemList('COMMAND')
         self.params_list = ['RES','%CPU']
+                
+        if self.user_list == None or self.process_list == None:
+            dia = wx.MessageDialog(self, 'No User/Process -- Please check directory/Date Range',
+                                   style = wx.OK|wx.ICON_ERROR)
+            dia.ShowModal()
+            self.Destroy()
+            return
 
         self.panel = wx.Panel(self, -1)
 
@@ -33,7 +42,9 @@ class FitTopFrame(wx.Frame):
         self.param_listbox_sizer = wx.StaticBoxSizer(param_static_box,wx.VERTICAL)
 
         # User List Box
-        self.user_listbox = wx.ListBox(self.panel, wx.ID_ANY, wx.DefaultPosition, (170, 130), self.user_list, wx.LB_MULTIPLE | wx.LB_SORT)
+        self.user_listbox = wx.ListBox(self.panel, wx.ID_ANY,
+                                       wx.DefaultPosition, (170, 130), self.user_list, wx.LB_MULTIPLE |
+                                       wx.LB_SORT)
         self.user_listbox.SetSelection(0)
         # Check Box to select all users
         self.all_user_cb = wx.CheckBox(self.panel, wx.ID_ANY, 'Select All')
@@ -41,7 +52,9 @@ class FitTopFrame(wx.Frame):
         self.all_user_cb.Bind(wx.EVT_CHECKBOX, self.toggleAllUserSelect)
 
         # Process List Box
-        self.process_listbox = wx.ListBox(self.panel, wx.ID_ANY, wx.DefaultPosition, (170, 130), self.process_list, wx.LB_MULTIPLE | wx.LB_SORT)
+        self.process_listbox = wx.ListBox(self.panel, wx.ID_ANY,
+                                          wx.DefaultPosition, (170, 130), self.process_list, wx.LB_MULTIPLE |
+                                          wx.LB_SORT)
         self.process_listbox.SetSelection(0)
         
         # Check Box to select all processes
@@ -50,21 +63,28 @@ class FitTopFrame(wx.Frame):
         self.all_process_cb.Bind(wx.EVT_CHECKBOX, self.toggleAllProcessSelect)
 
         # Param List Box
-        self.param_listbox = wx.ListBox(self.panel, wx.ID_ANY, wx.DefaultPosition, (170, 130), self.params_list, wx.LB_SINGLE)
+        self.param_listbox = wx.ListBox(self.panel, wx.ID_ANY,
+                                        wx.DefaultPosition, (170, 130), self.params_list, wx.LB_SINGLE)
         self.param_listbox.SetSelection(0)
 
-        self.user_static_box_sizer.Add(self.user_listbox, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 10)
+        self.user_static_box_sizer.Add(self.user_listbox, proportion = 1,
+                                       flag = wx.ALL | wx.EXPAND, border = 10)
         self.user_static_box_sizer.Add(self.all_user_cb, 0, wx.BOTTOM | wx.CENTER)
-        self.process_listbox_sizer.Add(self.process_listbox, proportion = 1,  flag = wx.ALL | wx.EXPAND, border = 10)
+        self.process_listbox_sizer.Add(self.process_listbox, proportion = 1,
+                                       flag = wx.ALL | wx.EXPAND, border = 10)
         self.process_listbox_sizer.Add(self.all_process_cb, 0, wx.BOTTOM | wx.CENTER)
-        self.param_listbox_sizer.Add(self.param_listbox, proportion = 1,  flag = wx.ALL | wx.EXPAND, border = 10)
+        self.param_listbox_sizer.Add(self.param_listbox, proportion = 1, flag
+                                     = wx.ALL | wx.EXPAND, border = 10)
 
         # Add Each list box to main grid sizer.
-        self.main_grid_sizer.Add(self.user_static_box_sizer, proportion = 1,  flag = wx.ALL | wx.EXPAND | wx.ALIGN_TOP)
+        self.main_grid_sizer.Add(self.user_static_box_sizer, proportion = 1,
+                                 flag = wx.ALL | wx.EXPAND | wx.ALIGN_TOP)
 
-        self.main_grid_sizer.Add(self.process_listbox_sizer, proportion = 1, flag = wx.ALL | wx.EXPAND | wx.ALIGN_TOP)
+        self.main_grid_sizer.Add(self.process_listbox_sizer, proportion = 1,
+                                 flag = wx.ALL | wx.EXPAND | wx.ALIGN_TOP)
 
-        self.main_grid_sizer.Add(self.param_listbox_sizer, proportion = 1, flag = wx.ALL | wx.EXPAND | wx.ALIGN_TOP)
+        self.main_grid_sizer.Add(self.param_listbox_sizer, proportion = 1,
+                                 flag = wx.ALL | wx.EXPAND | wx.ALIGN_TOP)
 
         # Static box for each type of plot (Summary,Time plots & Scatter plots)
         summary_plot_static_box = wx.StaticBox(self.panel, wx.ID_ANY, "Summary")
