@@ -39,12 +39,12 @@ class FitMainWindow(wx.Frame):
         self.start_cal = wxcal.CalendarCtrl(self.panel, wx.ID_ANY, wx.DateTime.Today(),
                                     style=wxcal.CAL_SEQUENTIAL_MONTH_SELECTION)
                                     
-        self.start_cal.Bind(wxcal.EVT_CALENDAR,self.SetStart)
+        self.start_cal.Bind(wxcal.EVT_CALENDAR_SEL_CHANGED,self.SetStart)
 
         
         self.end_cal = wxcal.CalendarCtrl(self.panel, wx.ID_ANY, wx.DateTime.Today(),
                                     style=wxcal.CAL_SEQUENTIAL_MONTH_SELECTION)
-        self.end_cal.Bind(wxcal.EVT_CALENDAR,self.SetEnd)
+        self.end_cal.Bind(wxcal.EVT_CALENDAR_SEL_CHANGED,self.SetEnd)
         
         self.start_static_box_sizer.Add(self.start_cal, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 10)
         self.end_static_box_sizer.Add(self.end_cal, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 10)

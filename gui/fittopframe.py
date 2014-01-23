@@ -2,6 +2,7 @@ import wx
 from fitplotter import FitPlotter
 #from fitdialog import FitDialog
 from  parser.topparser import TopDirParser
+from fitlistbox import FitListBox
 import pandas as pd
 import numpy as np
 
@@ -25,7 +26,7 @@ class FitTopFrame(wx.Frame):
             dia = wx.MessageDialog(self, 'No User/Process -- Please check directory/Date Range',
                                    style = wx.OK|wx.ICON_ERROR)
             dia.ShowModal()
-            self.Destroy()
+            self.Close()
             return
 
         self.panel = wx.Panel(self, -1)
@@ -42,7 +43,7 @@ class FitTopFrame(wx.Frame):
         self.param_listbox_sizer = wx.StaticBoxSizer(param_static_box,wx.VERTICAL)
 
         # User List Box
-        self.user_listbox = wx.ListBox(self.panel, wx.ID_ANY,
+        self.user_listbox = FitListBox(self.panel, wx.ID_ANY,
                                        wx.DefaultPosition, (170, 130), self.user_list, wx.LB_MULTIPLE |
                                        wx.LB_SORT)
         self.user_listbox.SetSelection(0)
@@ -52,7 +53,7 @@ class FitTopFrame(wx.Frame):
         self.all_user_cb.Bind(wx.EVT_CHECKBOX, self.toggleAllUserSelect)
 
         # Process List Box
-        self.process_listbox = wx.ListBox(self.panel, wx.ID_ANY,
+        self.process_listbox = FitListBox(self.panel, wx.ID_ANY,
                                           wx.DefaultPosition, (170, 130), self.process_list, wx.LB_MULTIPLE |
                                           wx.LB_SORT)
         self.process_listbox.SetSelection(0)
@@ -63,7 +64,7 @@ class FitTopFrame(wx.Frame):
         self.all_process_cb.Bind(wx.EVT_CHECKBOX, self.toggleAllProcessSelect)
 
         # Param List Box
-        self.param_listbox = wx.ListBox(self.panel, wx.ID_ANY,
+        self.param_listbox = FitListBox(self.panel, wx.ID_ANY,
                                         wx.DefaultPosition, (170, 130), self.params_list, wx.LB_SINGLE)
         self.param_listbox.SetSelection(0)
 
@@ -130,39 +131,20 @@ class FitTopFrame(wx.Frame):
 
         self.panel.SetSizerAndFit(self.main_grid_sizer)
 
-    
+
     def loadTopData(self, start, end):
         if self.parsedir != "":
             self.parsedir = self.parsedir+'/'
             return TopDirParser(start, end, self.parsedir)
 
-
-    def GetDropList(self, itemlist, listbox):
-        sel_list = [listbox.GetString(i) for i in listbox.GetSelections()]
-        drop_list = []
-        for i in itemlist:
-            if i not in sel_list:
-                drop_list.append(i)
-                
-        return drop_list
-    
-    def GetSelList(self, itemlist, listbox):
-        sel_list = [listbox.GetString(i) for i in listbox.GetSelections()]
-        drop_list = []
-        for i in itemlist:
-            if i in sel_list:
-                drop_list.append(i)
-                
-        return drop_list    
-
     def userVsParamSummary(self, event):
         self.user_vs_param_summary_plotter = FitPlotter((2,2))
         self.plotter['uservsparam_summary'] = self.user_vs_param_summary_plotter
-        preselector={'COMMAND':self.GetSelList(self.process_list,self.process_listbox)}
+        preselector={'COMMAND':self.process_listbox.GetSelList(self.process_list)}
         df = self.top_dir_parser.GenDF('USER',False,preselector)
-        drop_list = self.GetDropList(self.params_list,self.param_listbox)
+        drop_list = self.param_listbox.GetDropList(self.params_list)
         df = df.drop(drop_list,level=1)
-        drop_list = self.GetDropList(self.user_list,self.user_listbox)
+        drop_list = self.user_listbox.GetDropList(self.user_list)
         for i in drop_list[:]:
             if i not in df.index:
                 drop_list.remove(i)
@@ -179,15 +161,15 @@ class FitTopFrame(wx.Frame):
         self.user_vs_param_summary_plotter.Show(True)
 
         return True
-    
+
     def perUserParamVsTime(self, event):
         self.userparam_vs_time_plotter = FitPlotter((1,1))
         self.plotter['userparamvstime'] = self.userparam_vs_time_plotter
-        preselector={'COMMAND':self.GetSelList(self.process_list,self.process_listbox)}
+        preselector={'COMMAND':self.process_listbox.GetSelList(self.process_list)}
         df,gd = self.top_dir_parser.GenDF('USER',True,preselector)
-        drop_list = self.GetDropList(self.params_list,self.param_listbox)
+        drop_list = self.param_listbox.GetDropList(self.params_list)
         df = df.drop(drop_list,level=1)
-        drop_list = self.GetDropList(self.user_list,self.user_listbox)
+        drop_list = self.user_listbox.GetDropList(self.user_list)
         for i in drop_list[:]:
             if i not in df.index:
                 drop_list.remove(i)        
@@ -203,11 +185,11 @@ class FitTopFrame(wx.Frame):
     def processVsParamSummary(self, event):
         self.process_vs_param_summary_plotter = FitPlotter((2,2))
         self.plotter['processvsparam_summary'] = self.process_vs_param_summary_plotter
-        preselector={'USER':self.GetSelList(self.user_list,self.user_listbox)}
+        preselector={'USER':self.user_listbox.GetSelList(self.user_list)}
         df = self.top_dir_parser.GenDF('COMMAND',False,preselector)
-        drop_list = self.GetDropList(self.params_list,self.param_listbox)
+        drop_list = self.param_listbox.GetDropList(self.params_list)
         df = df.drop(drop_list,level=1)
-        drop_list = self.GetDropList(self.process_list,self.process_listbox)
+        drop_list = self.process_listbox.GetDropList(self.process_list)
         for i in drop_list[:]:
             if i not in df.index:
                 drop_list.remove(i)
@@ -224,15 +206,15 @@ class FitTopFrame(wx.Frame):
         self.process_vs_param_summary_plotter.Show(True)
 
         return True
-    
+
     def perProcessParamVsTime(self, event):
         self.processparam_vs_time_plotter = FitPlotter((1,1))
         self.plotter['processparamvstime'] = self.processparam_vs_time_plotter
-        preselector={'USER':self.GetSelList(self.user_list,self.user_listbox)}
+        preselector={'USER':self.user_listbox.GetSelList(self.user_list)}
         df,gd = self.top_dir_parser.GenDF('COMMAND',True,preselector)
-        drop_list = self.GetDropList(self.params_list,self.param_listbox)
+        drop_list = self.param_listbox.GetDropList(self.params_list)
         df = df.drop(drop_list,level=1)
-        drop_list = self.GetDropList(self.process_list,self.process_listbox)
+        drop_list = self.process_listbox.GetDropList(self.process_list)
         for i in drop_list[:]:
             if i not in df.index:
                 drop_list.remove(i)        
@@ -245,9 +227,7 @@ class FitTopFrame(wx.Frame):
         self.processparam_vs_time_plotter.Show(True)
         
         return True
-            
-        
-             
+
     def toggleAllUserSelect(self, event):
         if self.all_user_cb.GetValue() == True:
             for i in range(self.user_listbox.GetCount()):
