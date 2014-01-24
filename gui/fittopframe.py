@@ -23,10 +23,7 @@ class FitTopFrame(wx.Frame):
         self.params_list = ['RES','%CPU']
                 
         if self.user_list == None or self.process_list == None:
-            dia = wx.MessageDialog(self, 'No User/Process -- Please check directory/Date Range',
-                                   style = wx.OK|wx.ICON_ERROR)
-            dia.ShowModal()
-            self.Close()
+            self.showErrorDialog('No User/Process -- Please check directory/Date Range', True)
             return
 
         self.panel = wx.Panel(self, -1)
@@ -137,9 +134,36 @@ class FitTopFrame(wx.Frame):
             self.parsedir = self.parsedir+'/'
             return TopDirParser(start, end, self.parsedir)
 
+    def showErrorDialog(self,message, closeFrame = False):
+        dia = wx.MessageDialog(self, message, 'Error', style = wx.OK|wx.ICON_ERROR)
+        dia.ShowModal()
+        if closeFrame == True:
+            self.Destroy()
+        else:
+            dia.Destroy()
+        
+        return
+    
+    def checkEmpty(self, obj, message):
+        if not obj:
+            self.showErrorDialog(message)
+            return True
+        else:
+            return False
+        
+    def checkSelectionsEmpty(self):
+        if len(self.user_listbox.GetSelections()) == 0:
+            self.showErrorDialog("No user selected")
+            return True
+        elif len(self.process_listbox.GetSelections()) == 0:
+            self.showErrorDialog("No process selected")
+            return True
+        else:
+            return False
+
     def userVsParamSummary(self, event):
-        self.user_vs_param_summary_plotter = FitPlotter((2,2))
-        self.plotter['uservsparam_summary'] = self.user_vs_param_summary_plotter
+        if self.checkSelectionsEmpty() == True:
+            return
         preselector={'COMMAND':self.process_listbox.GetSelList(self.process_list)}
         df = self.top_dir_parser.GenDF('USER',False,preselector)
         drop_list = self.param_listbox.GetDropList(self.params_list)
@@ -148,7 +172,11 @@ class FitTopFrame(wx.Frame):
         for i in drop_list[:]:
             if i not in df.index:
                 drop_list.remove(i)
-        df = df.drop(drop_list)        
+        df = df.drop(drop_list)
+        if self.checkEmpty(df, "Empty Data") == True:
+            return
+        self.user_vs_param_summary_plotter = FitPlotter((2,2))
+        self.plotter['uservsparam_summary'] = self.user_vs_param_summary_plotter        
         ser = df.transpose().max().reset_index('minor').drop('minor',axis=1)
         self.user_vs_param_summary_plotter.grouped_plot(ser,1,'max')
         ser = df.transpose().min().reset_index('minor').drop('minor',axis=1)
@@ -160,11 +188,9 @@ class FitTopFrame(wx.Frame):
         self.user_vs_param_summary_plotter.Center()
         self.user_vs_param_summary_plotter.Show(True)
 
-        return True
-
     def perUserParamVsTime(self, event):
-        self.userparam_vs_time_plotter = FitPlotter((1,1))
-        self.plotter['userparamvstime'] = self.userparam_vs_time_plotter
+        if self.checkSelectionsEmpty() == True:
+            return        
         preselector={'COMMAND':self.process_listbox.GetSelList(self.process_list)}
         df,gd = self.top_dir_parser.GenDF('USER',True,preselector)
         drop_list = self.param_listbox.GetDropList(self.params_list)
@@ -174,17 +200,20 @@ class FitTopFrame(wx.Frame):
             if i not in df.index:
                 drop_list.remove(i)        
         df = df.drop(drop_list)
+        if self.checkEmpty(df, "Empty Data") == True:
+            return
+        self.userparam_vs_time_plotter = FitPlotter((1,1))
+        self.plotter['userparamvstime'] = self.userparam_vs_time_plotter        
         self.userparam_vs_time_plotter.simple_plot(df.transpose(),title="UserMem Vs Time")
         if self.enable_user_locall_sum.GetValue() == True:
             self.userparam_vs_time_plotter.simple_plot(df.sum(),label='Selected Total', style = '--',color='r')
         self.userparam_vs_time_plotter.simple_plot(gd,label='Global Total', style = '--',color='g')
         self.userparam_vs_time_plotter.Center()
         self.userparam_vs_time_plotter.Show(True)
-        return True
 
     def processVsParamSummary(self, event):
-        self.process_vs_param_summary_plotter = FitPlotter((2,2))
-        self.plotter['processvsparam_summary'] = self.process_vs_param_summary_plotter
+        if self.checkSelectionsEmpty() == True:
+            return        
         preselector={'USER':self.user_listbox.GetSelList(self.user_list)}
         df = self.top_dir_parser.GenDF('COMMAND',False,preselector)
         drop_list = self.param_listbox.GetDropList(self.params_list)
@@ -193,7 +222,11 @@ class FitTopFrame(wx.Frame):
         for i in drop_list[:]:
             if i not in df.index:
                 drop_list.remove(i)
-        df = df.drop(drop_list)        
+        df = df.drop(drop_list)
+        if self.checkEmpty(df, "Empty Data") == True:
+            return
+        self.process_vs_param_summary_plotter = FitPlotter((2,2))
+        self.plotter['processvsparam_summary'] = self.process_vs_param_summary_plotter        
         ser = df.transpose().max().reset_index('minor').drop('minor',axis=1)
         self.process_vs_param_summary_plotter.grouped_plot(ser,1,'max')
         ser = df.transpose().min().reset_index('minor').drop('minor',axis=1)
@@ -205,11 +238,9 @@ class FitTopFrame(wx.Frame):
         self.process_vs_param_summary_plotter.Center()
         self.process_vs_param_summary_plotter.Show(True)
 
-        return True
-
     def perProcessParamVsTime(self, event):
-        self.processparam_vs_time_plotter = FitPlotter((1,1))
-        self.plotter['processparamvstime'] = self.processparam_vs_time_plotter
+        if self.checkSelectionsEmpty() == True:
+            return        
         preselector={'USER':self.user_listbox.GetSelList(self.user_list)}
         df,gd = self.top_dir_parser.GenDF('COMMAND',True,preselector)
         drop_list = self.param_listbox.GetDropList(self.params_list)
@@ -219,6 +250,10 @@ class FitTopFrame(wx.Frame):
             if i not in df.index:
                 drop_list.remove(i)        
         df = df.drop(drop_list)
+        if self.checkEmpty(df, "Empty Data") == True:
+            return
+        self.processparam_vs_time_plotter = FitPlotter((1,1))
+        self.plotter['processparamvstime'] = self.processparam_vs_time_plotter        
         self.processparam_vs_time_plotter.simple_plot(df.transpose(),title="ProcessMem Vs Time")
         if self.enable_process_locall_sum.GetValue() == True:
             self.processparam_vs_time_plotter.simple_plot(df.sum(),label='Selected Total', style = '--',color='r')
@@ -226,7 +261,7 @@ class FitTopFrame(wx.Frame):
         self.processparam_vs_time_plotter.Center()
         self.processparam_vs_time_plotter.Show(True)
         
-        return True
+        return
 
     def toggleAllUserSelect(self, event):
         if self.all_user_cb.GetValue() == True:
