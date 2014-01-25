@@ -26,7 +26,6 @@ class TopDirParser:
             self.panel_dict = dict()
             for ifile in filelist:
                 fs = pd.to_datetime(ifile[:ifile.find('.')])
-                #print pd.to_datetime(start),pd.to_datetime(end)
                 if fs >= pd.to_datetime(start) and fs <= pd.to_datetime(end):
                     self.panel_dict[fs] = pd.read_csv(targetdir+ifile,
                                                         sep='\s+',

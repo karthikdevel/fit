@@ -8,6 +8,7 @@ class FitMainWindow(wx.Frame):
 
         self.start_date = ""
         self.end_date = ""
+        self.setEpochEternal()
 
         self.SetMinSize((650, 300))
         self.Center()
@@ -18,7 +19,7 @@ class FitMainWindow(wx.Frame):
         self.main_grid_bag_sizer = wx.GridBagSizer(9,9)
         
         self.dir_name = wx.TextCtrl(self.panel, wx.ID_ANY, size=(180, 20))
-        self.dir_name.SetValue("Enter")
+        self.dir_name.SetValue("/home/karthik/work/python/bigdata/temp")
         self.log_path = wx.Button(self.panel, wx.ID_ANY, "Logs Path")
         self.log_path.Bind(wx.EVT_BUTTON, self.opendir)
         
@@ -48,7 +49,14 @@ class FitMainWindow(wx.Frame):
         
         self.start_static_box_sizer.Add(self.start_cal, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 10)
         self.end_static_box_sizer.Add(self.end_cal, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 10)
+        
+        self.end_cal.Disable()
+        self.start_cal.Disable()        
                 
+        self.date_sel = wx.CheckBox(self.panel, wx.ID_ANY, 'Date Range')
+        self.date_sel.SetValue(False)
+        self.date_sel.Bind(wx.EVT_CHECKBOX, self.calenderEnDis)
+
         # Add to the correct grid_bag.
         self.main_grid_bag_sizer.Add(self.dir_name, (0,0), (1,3), flag = wx.EXPAND)
         self.main_grid_bag_sizer.Add(self.log_path, (0,3), (1,4), flag = wx.EXPAND)        
@@ -57,6 +65,7 @@ class FitMainWindow(wx.Frame):
         self.main_grid_bag_sizer.Add(self.free_cb, (1,1), (1,2), flag = wx.EXPAND)
         self.main_grid_bag_sizer.Add(self.start_static_box_sizer, (2,0),wx.DefaultSpan,flag = wx.EXPAND)
         self.main_grid_bag_sizer.Add(self.end_static_box_sizer, (2,1),wx.DefaultSpan, flag = wx.EXPAND)
+        self.main_grid_bag_sizer.Add(self.date_sel, (2,2), (2,3), flag = wx.EXPAND)
                 
         for i in range(4):
             self.main_grid_bag_sizer.AddGrowableRow(i)
@@ -64,7 +73,24 @@ class FitMainWindow(wx.Frame):
             self.main_grid_bag_sizer.AddGrowableCol(i)
 
         self.panel.SetSizerAndFit(self.main_grid_bag_sizer)
-    
+        
+    def calenderEnDis(self, event):
+        cb = event.GetEventObject()
+        if  cb.GetValue() == True:
+            self.end_cal.Enable()
+            self.start_cal.Enable()
+        else:
+            self.end_cal.Disable()
+            self.start_cal.Disable()
+            self.setEpochEternal()
+            
+    def setEpochEternal(self):
+        dt = wx.DateTime()
+        dt.Set(day=1,month=1,year=1900)
+        self.start_date = str(dt)
+        dt.Set(day=1,month=1,year=2050)
+        self.end_date = str(dt)
+
     def SetStart(self, event):
         self.start_date = str(event.GetDate())
         
@@ -76,13 +102,10 @@ class FitMainWindow(wx.Frame):
         if dlg.ShowModal() == wx.ID_OK:
             self.dir_name.SetValue(dlg.GetPath())
         dlg.Destroy()
-    
+
     def LaunchTopFrame(self,event):
         if self.dir_name.GetValue() != "Enter":
             self.top_frame = FitTopFrame(None, wx.ID_ANY, self.dir_name.GetValue(), self.start_date, self.end_date, title='Top Window')
             self.top_frame.Centre(True)
             self.frames = dict()
             self.top_frame.Show(True)
-        
-        return True        
-        
