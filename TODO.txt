@@ -5,3 +5,4 @@ param and process or user.
 4) Add more plots covering all the information in a top log.
 5) Bring in a testing framework.
 6) Packaging for standalone installers in multiple OSes.
+7) Implement support for different logs formats.
