@@ -1,0 +1,7 @@
+1) Implement support for scatter plots.. hopefully get correlation between
+param and process or user.
+2) Implement support for free
+3) Implement support for iostat logs.
+4) Add more plots covering all the information in a top log.
+5) Bring in a testing framework.
+6) Packaging for standalone installers in multiple OSes.
