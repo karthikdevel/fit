@@ -14,7 +14,7 @@ class FitPlotter(wx.Frame):
 
 
         self.panel=wx.Panel(self, wx.ID_ANY)
-        
+
         self.figure = Figure()
         self.max_subplots = subplots[0]*subplots[1]
         self.axes = [self.figure.add_subplot(subplots[0],subplots[1],i) for i in range(1,self.max_subplots+1)]
@@ -32,8 +32,7 @@ class FitPlotter(wx.Frame):
             plottable.plot(kind='bar',ax=self.axes[subplot-1],title=title)
         else:
             return False
-        
+
     def simple_plot(self,plottable,**kwargs):
         plottable.plot(ax=self.axes[0],**kwargs)
-                
 

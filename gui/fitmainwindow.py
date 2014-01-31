@@ -17,12 +17,12 @@ class FitMainWindow(wx.Frame):
 
         # top level sizer.
         self.main_grid_bag_sizer = wx.GridBagSizer(9,9)
-        
+
         self.dir_name = wx.TextCtrl(self.panel, wx.ID_ANY, size=(180, 20))
         self.dir_name.SetValue("/home/karthik/work/python/bigdata/temp")
         self.log_path = wx.Button(self.panel, wx.ID_ANY, "Logs Path")
-        self.log_path.Bind(wx.EVT_BUTTON, self.opendir)
-        
+        self.log_path.Bind(wx.EVT_BUTTON, self.openDir)
+
         # Check grid_bag to select Top/Free/IOStat
         self.top_cb = wx.CheckBox(self.panel, wx.ID_ANY, 'Top')
         self.top_cb.SetValue(False)
@@ -31,28 +31,28 @@ class FitMainWindow(wx.Frame):
 
         self.launch_button = wx.Button(self.panel, wx.ID_ANY, "Launch")
         self.launch_button.Bind(wx.EVT_BUTTON,self.LaunchTopFrame)
-        
+
         self.start_static_box = wx.StaticBox(self.panel, wx.ID_ANY, "Start Date")
         self.start_static_box_sizer = wx.StaticBoxSizer(self.start_static_box,wx.VERTICAL)
         self.end_static_box = wx.StaticBox(self.panel, wx.ID_ANY, "End Date")
         self.end_static_box_sizer = wx.StaticBoxSizer(self.end_static_box,wx.VERTICAL)        
-        
+
         self.start_cal = wxcal.CalendarCtrl(self.panel, wx.ID_ANY, wx.DateTime.Today(),
-                                    style=wxcal.CAL_SEQUENTIAL_MONTH_SELECTION)
-                                    
+                                            style=wxcal.CAL_SEQUENTIAL_MONTH_SELECTION)
+
         self.start_cal.Bind(wxcal.EVT_CALENDAR_SEL_CHANGED,self.SetStart)
 
-        
+
         self.end_cal = wxcal.CalendarCtrl(self.panel, wx.ID_ANY, wx.DateTime.Today(),
-                                    style=wxcal.CAL_SEQUENTIAL_MONTH_SELECTION)
+                                          style=wxcal.CAL_SEQUENTIAL_MONTH_SELECTION)
         self.end_cal.Bind(wxcal.EVT_CALENDAR_SEL_CHANGED,self.SetEnd)
-        
+
         self.start_static_box_sizer.Add(self.start_cal, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 10)
         self.end_static_box_sizer.Add(self.end_cal, proportion = 1, flag = wx.ALL | wx.EXPAND, border = 10)
-        
+
         self.end_cal.Disable()
         self.start_cal.Disable()        
-                
+
         self.date_sel = wx.CheckBox(self.panel, wx.ID_ANY, 'Date Range')
         self.date_sel.SetValue(False)
         self.date_sel.Bind(wx.EVT_CHECKBOX, self.calenderEnDis)
@@ -66,14 +66,14 @@ class FitMainWindow(wx.Frame):
         self.main_grid_bag_sizer.Add(self.start_static_box_sizer, (2,0),wx.DefaultSpan,flag = wx.EXPAND)
         self.main_grid_bag_sizer.Add(self.end_static_box_sizer, (2,1),wx.DefaultSpan, flag = wx.EXPAND)
         self.main_grid_bag_sizer.Add(self.date_sel, (2,2), (2,3), flag = wx.EXPAND)
-                
+
         for i in range(4):
             self.main_grid_bag_sizer.AddGrowableRow(i)
         for i in range(8):
             self.main_grid_bag_sizer.AddGrowableCol(i)
 
         self.panel.SetSizerAndFit(self.main_grid_bag_sizer)
-        
+
     def calenderEnDis(self, event):
         cb = event.GetEventObject()
         if  cb.GetValue() == True:
@@ -83,21 +83,20 @@ class FitMainWindow(wx.Frame):
             self.end_cal.Disable()
             self.start_cal.Disable()
             self.setEpochEternal()
-            
+
     def setEpochEternal(self):
-        dt = wx.DateTime()
-        dt.Set(day=1,month=1,year=1900)
+        dt = wx.DateTime().Set(day=1,month=1,year=1900)
         self.start_date = str(dt)
         dt.Set(day=1,month=1,year=2050)
         self.end_date = str(dt)
 
     def SetStart(self, event):
         self.start_date = str(event.GetDate())
-        
+
     def SetEnd(self, event):        
         self.end_date = str(event.GetDate())
-                    
-    def opendir(self, event):
+
+    def openDir(self, event):
         dlg = wx.DirDialog(self, "Choose a directory:", style=wx.DD_DEFAULT_STYLE | wx.DD_NEW_DIR_BUTTON)
         if dlg.ShowModal() == wx.ID_OK:
             self.dir_name.SetValue(dlg.GetPath())

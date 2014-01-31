@@ -12,16 +12,16 @@ class FitTopFrame(wx.Frame):
 
         self.SetMinSize((750, 450))
         self.Center(True)
-        
+
         self.parsedir = parsedir
         self.plotter= dict()
-        
+
         self.top_dir_parser = self.loadTopData(start_date, end_date)
-        
+
         self.user_list = self.top_dir_parser.GetItemList('USER')
         self.process_list = self.top_dir_parser.GetItemList('COMMAND')
         self.params_list = ['RES','%CPU']
-                
+
         if self.user_list == None or self.process_list == None:
             self.showErrorDialog('No User/Process -- Please check directory/Date Range', True)
             return
@@ -54,7 +54,7 @@ class FitTopFrame(wx.Frame):
                                           wx.DefaultPosition, (170, 130), self.process_list, wx.LB_MULTIPLE |
                                           wx.LB_SORT)
         self.process_listbox.SetSelection(0)
-        
+
         # Check Box to select all processes
         self.all_process_cb = wx.CheckBox(self.panel, wx.ID_ANY, 'Select All')
         self.all_process_cb.SetValue(False)
@@ -141,16 +141,16 @@ class FitTopFrame(wx.Frame):
             self.Destroy()
         else:
             dia.Destroy()
-        
+
         return
-    
+
     def checkEmpty(self, obj, message):
         if not obj:
             self.showErrorDialog(message)
             return True
         else:
             return False
-        
+
     def checkSelectionsEmpty(self):
         if len(self.user_listbox.GetSelections()) == 0:
             self.showErrorDialog("No user selected")
@@ -260,7 +260,7 @@ class FitTopFrame(wx.Frame):
         self.processparam_vs_time_plotter.simple_plot(gd,label='Global Total', style = '--',color='g')        
         self.processparam_vs_time_plotter.Center()
         self.processparam_vs_time_plotter.Show(True)
-        
+
         return
 
     def toggleAllUserSelect(self, event):
@@ -271,7 +271,7 @@ class FitTopFrame(wx.Frame):
             for i in range(self.user_listbox.GetCount()):
                 self.user_listbox.Deselect(i)
             self.user_listbox.SetSelection(0)
-        
+
         return True
 
     def toggleAllProcessSelect(self, event):
@@ -282,5 +282,5 @@ class FitTopFrame(wx.Frame):
             for i in range(self.process_listbox.GetCount()):
                 self.process_listbox.Deselect(i)
             self.process_listbox.SetSelection(0)
-        
+
         return True
