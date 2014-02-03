@@ -145,7 +145,7 @@ class FitTopFrame(wx.Frame):
         return
 
     def checkEmpty(self, obj, message):
-        if not obj:
+        if obj.empty:
             self.showErrorDialog(message)
             return True
         else:
