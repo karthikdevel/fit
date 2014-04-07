@@ -10,7 +10,7 @@ class FitMainWindow(wx.Frame):
         self.end_date = ""
         self.setEpochEternal()
 
-        self.SetMinSize((650, 300))
+        self.SetMinSize((750, 300))
         self.Center()
 
         self.panel = wx.Panel(self, -1)
@@ -58,19 +58,14 @@ class FitMainWindow(wx.Frame):
         self.date_sel.Bind(wx.EVT_CHECKBOX, self.calenderEnDis)
 
         # Add to the correct grid_bag.
-        self.main_grid_bag_sizer.Add(self.dir_name, (0,0), (1,3), flag = wx.EXPAND)
-        self.main_grid_bag_sizer.Add(self.log_path, (0,3), (1,4), flag = wx.EXPAND)        
-        self.main_grid_bag_sizer.Add(self.launch_button, (1,3), (1,4), flag = wx.EXPAND)
+        self.main_grid_bag_sizer.Add(self.dir_name, pos=(0,0), span=(1,3), flag = wx.EXPAND)
+        self.main_grid_bag_sizer.Add(self.log_path, (0,3), (1,1), flag = wx.EXPAND)        
+        self.main_grid_bag_sizer.Add(self.launch_button, (1,3), (1,1), flag = wx.EXPAND)
         self.main_grid_bag_sizer.Add(self.top_cb, (1,0), (1,1),flag = wx.EXPAND)
-        self.main_grid_bag_sizer.Add(self.free_cb, (1,1), (1,2), flag = wx.EXPAND)
+        self.main_grid_bag_sizer.Add(self.free_cb, (1,1), (1,1), flag = wx.EXPAND)
         self.main_grid_bag_sizer.Add(self.start_static_box_sizer, (2,0),wx.DefaultSpan,flag = wx.EXPAND)
         self.main_grid_bag_sizer.Add(self.end_static_box_sizer, (2,1),wx.DefaultSpan, flag = wx.EXPAND)
-        self.main_grid_bag_sizer.Add(self.date_sel, (2,2), (2,3), flag = wx.EXPAND)
-
-        for i in range(4):
-            self.main_grid_bag_sizer.AddGrowableRow(i)
-        for i in range(8):
-            self.main_grid_bag_sizer.AddGrowableCol(i)
+        self.main_grid_bag_sizer.Add(self.date_sel, (2,3), (1,1), flag = wx.EXPAND)
 
         self.panel.SetSizerAndFit(self.main_grid_bag_sizer)
 
