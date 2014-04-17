@@ -17,4 +17,4 @@ class FitListBox(wx.ListBox):
             if i in selections:
                 sel_list.append(i)
 
-        return sel_list      
+        return sel_list

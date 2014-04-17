@@ -60,10 +60,10 @@ class TopDirParser:
             for i in selector:
                 df = df[df[i].map(lambda x: True if x in selector[i] else False)]
                 df = df.reset_index(1,drop=True).drop(i,axis=1)
-            panel_dict_user[fs] = df.groupby(group).sum()
+            panel_dict_user[fs] = df.groupby(group).sum().stack()
 
-        pnl = pd.Panel.from_dict(panel_dict_user)
-        DF = pnl.to_frame(filter_observations=False)
+        DF = pd.concat(panel_dict_user,axis=1)
+        DF.index.set_names(['major','minor'], inplace=True)
 
         if global_data == True:
             return DF,pd.Series(global_data_dict)

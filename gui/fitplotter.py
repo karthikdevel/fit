@@ -35,4 +35,3 @@ class FitPlotter(wx.Frame):
 
     def simple_plot(self,plottable,**kwargs):
         plottable.plot(ax=self.axes[0],**kwargs)
-

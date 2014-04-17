@@ -1,6 +1,5 @@
 import wx
 from fitplotter import FitPlotter
-#from fitdialog import FitDialog
 from  parser.topparser import TopDirParser
 from fitlistbox import FitListBox
 import pandas as pd

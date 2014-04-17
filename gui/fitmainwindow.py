@@ -1,3 +1,5 @@
+import os
+
 import wx
 import wx.calendar as wxcal
 from fittopframe import FitTopFrame
@@ -19,7 +21,7 @@ class FitMainWindow(wx.Frame):
         self.main_grid_bag_sizer = wx.GridBagSizer(9,9)
 
         self.dir_name = wx.TextCtrl(self.panel, wx.ID_ANY, size=(180, 20))
-        self.dir_name.SetValue("/home/karthik/work/python/bigdata/temp")
+        self.dir_name.SetValue("Enter")
         self.log_path = wx.Button(self.panel, wx.ID_ANY, "Logs Path")
         self.log_path.Bind(wx.EVT_BUTTON, self.openDir)
 
@@ -98,8 +100,18 @@ class FitMainWindow(wx.Frame):
         dlg.Destroy()
 
     def LaunchTopFrame(self,event):
-        if self.dir_name.GetValue() != "Enter":
+        if os.path.exists(self.dir_name.GetValue()) == True:
             self.top_frame = FitTopFrame(None, wx.ID_ANY, self.dir_name.GetValue(), self.start_date, self.end_date, title='Top Window')
             self.top_frame.Centre(True)
             self.frames = dict()
             self.top_frame.Show(True)
+        else:
+            self.showErrorDialog("Directory does not exist.")
+
+    def showErrorDialog(self, message, closeFrame = False):
+        dia = wx.MessageDialog(self, message, 'Error', style = wx.OK|wx.ICON_ERROR)
+        dia.ShowModal()
+        if closeFrame == True:
+            self.Destroy()
+        else:
+            dia.Destroy()
