@@ -1,9 +1,14 @@
 import wx
+import os
+import threading
+import pandas as pd
+import numpy as np
+import Queue
+
 from fitplotter import FitPlotter
 from  parser.topparser import TopDirParser
 from fitlistbox import FitListBox
-import pandas as pd
-import numpy as np
+
 
 class FitTopFrame(wx.Frame):
     def __init__(self, parent, id, parsedir, start_date, end_date, title):
@@ -13,9 +18,12 @@ class FitTopFrame(wx.Frame):
         self.Center(True)
 
         self.parsedir = parsedir
-        self.plotter= dict()
+        self.plotter = dict()
 
         self.top_dir_parser = self.loadTopData(start_date, end_date)
+        if self.top_dir_parser == None:
+            self.Destroy()
+            return
 
         self.user_list = self.top_dir_parser.GetItemList('USER')
         self.process_list = self.top_dir_parser.GetItemList('COMMAND')
@@ -127,11 +135,49 @@ class FitTopFrame(wx.Frame):
 
         self.panel.SetSizerAndFit(self.main_grid_sizer)
 
-
     def loadTopData(self, start, end):
-        if self.parsedir != "":
-            self.parsedir = self.parsedir+'/'
-            return TopDirParser(start, end, self.parsedir)
+        self.parsedir = self.parsedir+'/'
+        file_list= os.listdir(self.parsedir)
+        self.numfiles_in_range = 0
+        
+        #Find number of files in range for progress bar.
+        for ifile in file_list:
+            fs = pd.to_datetime(ifile[:ifile.find('.')])
+            if fs >= pd.to_datetime(start) and fs <= pd.to_datetime(end):
+                self.numfiles_in_range += 1
+                
+        parser = TopDirParser(start, end, self.parsedir)
+
+        self.files_loaded = 0
+
+        self.progressDialog = wx.ProgressDialog("Loading Data",
+                                       "Starting Data Load...",
+                                       maximum = self.numfiles_in_range,
+                                       parent = self,
+                                       style = wx.PD_APP_MODAL
+                                        | wx.PD_CAN_ABORT
+                                        | wx.PD_AUTO_HIDE
+                                        #| wx.PD_ELAPSED_TIME
+                                        #| wx.PD_ESTIMATED_TIME
+                                        #| wx.PD_REMAINING_TIME
+                                        )
+
+        queue = Queue.Queue()
+        parserThread = threading.Thread(target=parser.LoadData,
+                                        args=(self.progressDialog, queue,
+                                              self.numfiles_in_range) )
+        parserThread.setDaemon(True)
+        parserThread.start()        
+        self.progressDialog.ShowModal()
+        
+        parserThread.join()
+        self.files_loaded = queue.get()
+        
+        if self.files_loaded == self.numfiles_in_range:
+            return parser
+        else:
+            return None
+        
 
     def showErrorDialog(self,message, closeFrame = False):
         dia = wx.MessageDialog(self, message, 'Error', style = wx.OK|wx.ICON_ERROR)
