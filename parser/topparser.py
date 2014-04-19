@@ -1,11 +1,9 @@
 import pandas as pd
 import numpy as np
 import os
-
-randn = np.random.randn
-
-myglobal = np.arange(100)
-myglobalidx = 1
+import wx
+import threading
+import time
 
 def processMG(arg1):
     if arg1 == None:
@@ -19,21 +17,37 @@ def processMG(arg1):
 
 class TopDirParser:
     def __init__(self, start, end, targetdir=None):
-
-        if targetdir != None:
-            filelist = os.listdir(targetdir) 
-
-            self.panel_dict = dict()
-            for ifile in filelist:
-                fs = pd.to_datetime(ifile[:ifile.find('.')])
-                if fs >= pd.to_datetime(start) and fs <= pd.to_datetime(end):
-                    self.panel_dict[fs] = pd.read_csv(targetdir+ifile,
-                                                      sep='\s+',
-                                                      skiprows=range(6),
-                                                      comment='<defunct>',
-                                                      #usecols = ['RES'],
-                                                      squeeze=False,
-                                                      converters={'RES':processMG})
+        self.targetdir = targetdir
+        self.filelist = os.listdir(self.targetdir)
+        self.start_ts = start
+        self.end_ts = end
+        
+    def LoadData(self, dlg, queue, numfiles):
+        self.panel_dict = dict()
+        files_loaded = 0
+        start_time = time.time()
+        for ifile in self.filelist:
+            fs = pd.to_datetime(ifile[:ifile.find('.')])
+            if fs >= pd.to_datetime(self.start_ts) and fs <= pd.to_datetime(self.end_ts):
+                self.panel_dict[fs] = pd.read_csv(self.targetdir+ifile,
+                                                  sep='\s+',
+                                                  skiprows=range(6),
+                                                  comment='<defunct>',
+                                                  #usecols = ['RES'],
+                                                  squeeze=False,
+                                                  converters={'RES':processMG})
+                
+                files_loaded += 1
+                process_rate = (time.time() - start_time)/files_loaded
+                message = "Loaded :{0:^6}".format(files_loaded)+" of "+`numfiles`+" at {0:.2f}".format(round(1/process_rate,2))+" Files/Sec "
+                if dlg:
+                    wx.CallAfter(dlg.Update,files_loaded,message)
+                    if dlg.WasCancelled() == True:
+                        dlg.EndModal(-1)
+                        break
+        if queue:
+            queue.put(files_loaded)
+        return True
 
     def GetItemList(self,item='USER'):
         if not self.panel_dict:
