@@ -39,7 +39,7 @@ class TopDirParser:
                 
                 files_loaded += 1
                 process_rate = (time.time() - start_time)/files_loaded
-                message = "Loaded :{0:^6}".format(files_loaded)+" of "+`numfiles`+" at {0:.2f}".format(round(1/process_rate,2))+" Files/Sec "
+                message = "Loaded :{0:^6}".format(files_loaded)+" of "+`numfiles`+" files at {0:.1f}".format(round(1/process_rate,2))+" Files/Sec "
                 if dlg:
                     wx.CallAfter(dlg.Update,files_loaded,message)
                     if dlg.WasCancelled() == True:

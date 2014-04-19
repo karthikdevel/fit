@@ -157,9 +157,9 @@ class FitTopFrame(wx.Frame):
                                        style = wx.PD_APP_MODAL
                                         | wx.PD_CAN_ABORT
                                         | wx.PD_AUTO_HIDE
-                                        #| wx.PD_ELAPSED_TIME
-                                        #| wx.PD_ESTIMATED_TIME
-                                        #| wx.PD_REMAINING_TIME
+                                        | wx.PD_ELAPSED_TIME
+                                        | wx.PD_ESTIMATED_TIME
+                                        | wx.PD_REMAINING_TIME
                                         )
 
         queue = Queue.Queue()
