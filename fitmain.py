@@ -4,7 +4,7 @@
 import wx
 import sys
 
-from gui.fitmainwindow import FitMainWindow
+from gui.wxpython.fitmainwindow import FitMainWindow
 
 sys.path.append('\\home\\karthik\\work\\python\\fit')
 
